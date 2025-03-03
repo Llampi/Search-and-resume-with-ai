@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Web Summarizer</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+        }
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container text-center">
+    <h1 class="mb-4 text-primary">🔍 Web Article Summarizer</h1>
+    
+    <form id="summaryForm" class="input-group">
+        {% csrf_token %}
+        <input type="text" name="url" id="url" class="form-control" placeholder="Ingresa la URL del artículo" required>
+        <button class="btn btn-primary" type="submit">Generar Resumen</button>
+    </form>
+
+    <!-- Indicador de carga -->
+    <div class="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-secondary">Generating summary...</p>
+    </div>
+
+    <h2 class="mt-4">Summary:</h2>
+    <div id="summary" class="alert alert-light border text-start"></div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.getElementById("summaryForm").onsubmit = async function(event) {
+        event.preventDefault();
+        
+        const url = document.getElementById("url").value;
+        const summaryContainer = document.getElementById("summary");
+        const loadingIndicator = document.querySelector(".loading");
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Mostrar indicador de carga
+        summaryContainer.innerHTML = "";
+        loadingIndicator.style.display = "block";
+
+        try {
+            const response = await fetch("/", {
+                method: "POST",
+                body: new URLSearchParams({ url }),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrftoken
+                }
+            });
+
+            const data = await response.json();
+            
+            // Mostrar resumen o mensaje de error
+            summaryContainer.innerHTML = `<p>${data.summary || data.error}</p>`;
+        } catch (error) {
+            summaryContainer.innerHTML = `<p class="text-danger">Error getting summary.</p>`;
+        } finally {
+            // Ocultar indicador de carga
+            loadingIndicator.style.display = "none";
+        }
+    };
+</script>
+
+</body>
+</html>
